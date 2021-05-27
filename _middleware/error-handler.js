@@ -5,6 +5,7 @@ function errorHandler(err, req, res, next) {
         case typeof err === 'string':
             // custom application error
             const is404 = err.toLowerCase().endsWith('not found');
+            // if true returns 404 else 400 (bad request) 
             const statusCode = is404 ? 404 : 400;
             return res.status(statusCode).json({ message: err });
         case err.name === 'UnauthorizedError':

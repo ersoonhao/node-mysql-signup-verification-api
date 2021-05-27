@@ -2,6 +2,9 @@ const { DataTypes } = require('sequelize');
 
 module.exports = model;
 
+// models is for reading & writing data? 
+// refreshtoken table
+// id & accountid is not inside ? where is it 
 function model(sequelize) {
     const attributes = {
         token: { type: DataTypes.STRING },

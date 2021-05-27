@@ -6,7 +6,9 @@ const authorize = require('_middleware/authorize')
 const Role = require('_helpers/role');
 const accountService = require('./account.service');
 
-// routes
+
+// this seems to be the complex MS? why multiple functions is parse?? i don't get it? 
+// routes 
 router.post('/authenticate', authenticateSchema, authenticate);
 router.post('/refresh-token', refreshToken);
 router.post('/revoke-token', authorize(), revokeTokenSchema, revokeToken);

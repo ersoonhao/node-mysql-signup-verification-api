@@ -1,7 +1,9 @@
+
+ // SQL table here 
 const { DataTypes } = require('sequelize');
 
 module.exports = model;
-
+// Accounts Table 
 function model(sequelize) {
     const attributes = {
         email: { type: DataTypes.STRING, allowNull: false },

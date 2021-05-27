@@ -191,7 +191,8 @@ async function update(id, params) {
         params.passwordHash = await hash(params.password);
     }
 
-    // copy params to account and save
+    // copy params to account and save. Wow i din't know JS had such a function
+    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
     Object.assign(account, params);
     account.updated = Date.now();
     await account.save();
@@ -205,7 +206,7 @@ async function _delete(id) {
 }
 
 // helper functions
-
+// wtf where this from db.Account?? some module but from where 
 async function getAccount(id) {
     const account = await db.Account.findByPk(id);
     if (!account) throw 'Account not found';

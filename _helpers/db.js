@@ -2,9 +2,13 @@ const config = require('config.json');
 const mysql = require('mysql2/promise');
 const { Sequelize } = require('sequelize');
 
+// MySql2 offers SSL & some authentication switch
+//https://www.npmjs.com/package/mysql2
 module.exports = db = {};
 
 initialize();
+
+// need to edit init models. hmm . 
 
 async function initialize() {
     // create db if it doesn't already exist
