@@ -4,5 +4,6 @@
 // hmm okay? 
 module.exports = {
     Admin: 'Admin',
-    User: 'User'
+    User: 'User',
+    Artist: 'Artist'
 }

@@ -76,9 +76,14 @@ async function revokeToken({ token, ipAddress }) {
     refreshToken.revokedByIp = ipAddress;
     await refreshToken.save();
 }
-
+// register function 
 async function register(params, origin) {
     // validate
+    console.log("look here"); 
+    console.log(params);
+    // console.log("orgins:" + {origin});
+    // console.log("SOMEHTING");
+
     if (await db.Account.findOne({ where: { email: params.email } })) {
         // send already registered error in email to prevent account enumeration
         return await sendAlreadyRegisteredEmail(params.email, origin);
@@ -86,10 +91,24 @@ async function register(params, origin) {
 
     // create account object
     const account = new db.Account(params);
-
+    console.log("START");
+    console.log(account);
+    console.log("END");
     // first registered account is an admin
     const isFirstAccount = (await db.Account.count()) === 0;
-    account.role = isFirstAccount ? Role.Admin : Role.User;
+    
+    if (isFirstAccount){
+
+        // runs when it is the first created account 
+        console.log("admin account");
+        account.role="Admin";
+    }
+    else if(account.role == "" && account.role!= "Admin" && account.role=="Artist") {
+        account.role="User";
+    }
+
+    // account.role = isFirstAccount ? Role.Admin : Role.User;
+
     account.verificationToken = randomTokenString();
 
     // hash password
@@ -159,7 +178,7 @@ async function getById(id) {
     const account = await getAccount(id);
     return basicDetails(account);
 }
-
+// Account table C
 async function create(params) {
     // validate
     if (await db.Account.findOne({ where: { email: params.email } })) {
@@ -177,7 +196,7 @@ async function create(params) {
 
     return basicDetails(account);
 }
-
+//Account table U
 async function update(id, params) {
     const account = await getAccount(id);
 
@@ -199,11 +218,13 @@ async function update(id, params) {
 
     return basicDetails(account);
 }
-
+// Account table D
 async function _delete(id) {
     const account = await getAccount(id);
     await account.destroy();
 }
+
+// Account table R
 
 // helper functions
 // wtf where this from db.Account?? some module but from where 

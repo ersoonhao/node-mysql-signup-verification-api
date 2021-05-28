@@ -4,7 +4,7 @@
         "port": 3306,
         "user": "root",
         "password": "",
-        "database": "node-mysql-signup-verification-api"
+        "database": "oio"
     },
     "secret": "4caf9654-6497-4d74-99da-ffcf929947ee",
  

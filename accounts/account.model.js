@@ -23,7 +23,8 @@ function model(sequelize) {
         isVerified: {
             type: DataTypes.VIRTUAL,
             get() { return !!(this.verified || this.passwordReset); }
-        }
+        },
+        isApproved: {type: DataTypes.BOOLEAN, allowNull: true}
     };
 
     const options = {
