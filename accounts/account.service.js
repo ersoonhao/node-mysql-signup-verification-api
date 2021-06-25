@@ -2,7 +2,9 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const crypto = require("crypto");
-const { Op } = require('sequelize');
+const {
+    Op
+} = require('sequelize');
 const sendEmail = require('_helpers/send-email');
 const db = require('_helpers/db');
 const Role = require('_helpers/role');
@@ -22,9 +24,18 @@ module.exports = {
     update,
     delete: _delete
 };
+// aprove wallet address 
 
-async function authenticate({ email, password, ipAddress }) {
-    const account = await db.Account.scope('withHash').findOne({ where: { email } });
+async function authenticate({
+    email,
+    password,
+    ipAddress
+}) {
+    const account = await db.Account.scope('withHash').findOne({
+        where: {
+            email
+        }
+    });
 
     if (!account || !account.isVerified || !(await bcrypt.compare(password, account.passwordHash))) {
         throw 'Email or password is incorrect';
@@ -45,7 +56,10 @@ async function authenticate({ email, password, ipAddress }) {
     };
 }
 
-async function refreshToken({ token, ipAddress }) {
+async function refreshToken({
+    token,
+    ipAddress
+}) {
     const refreshToken = await getRefreshToken(token);
     const account = await refreshToken.getAccount();
 
@@ -68,7 +82,10 @@ async function refreshToken({ token, ipAddress }) {
     };
 }
 
-async function revokeToken({ token, ipAddress }) {
+async function revokeToken({
+    token,
+    ipAddress
+}) {
     const refreshToken = await getRefreshToken(token);
 
     // revoke token and save
@@ -79,12 +96,16 @@ async function revokeToken({ token, ipAddress }) {
 // register function 
 async function register(params, origin) {
     // validate
-    console.log("look here"); 
+    console.log("look here");
     console.log(params);
     // console.log("orgins:" + {origin});
     // console.log("SOMEHTING");
 
-    if (await db.Account.findOne({ where: { email: params.email } })) {
+    if (await db.Account.findOne({
+            where: {
+                email: params.email
+            }
+        })) {
         // send already registered error in email to prevent account enumeration
         return await sendAlreadyRegisteredEmail(params.email, origin);
     }
@@ -96,15 +117,14 @@ async function register(params, origin) {
     console.log("END");
     // first registered account is an admin
     const isFirstAccount = (await db.Account.count()) === 0;
-    
-    if (isFirstAccount){
+
+    if (isFirstAccount) {
 
         // runs when it is the first created account 
         console.log("admin account");
-        account.role="Admin";
-    }
-    else if(account.role == "" && account.role!= "Admin" && account.role=="Artist") {
-        account.role="User";
+        account.role = "Admin";
+    } else if (account.role == "" && account.role != "Admin" && account.role == "Artist") {
+        account.role = "User";
     }
 
     // account.role = isFirstAccount ? Role.Admin : Role.User;
@@ -121,8 +141,14 @@ async function register(params, origin) {
     await sendVerificationEmail(account, origin);
 }
 
-async function verifyEmail({ token }) {
-    const account = await db.Account.findOne({ where: { verificationToken: token } });
+async function verifyEmail({
+    token
+}) {
+    const account = await db.Account.findOne({
+        where: {
+            verificationToken: token
+        }
+    });
 
     if (!account) throw 'Verification failed';
 
@@ -131,26 +157,68 @@ async function verifyEmail({ token }) {
     await account.save();
 }
 
-async function forgotPassword({ email }, origin) {
-    const account = await db.Account.findOne({ where: { email } });
 
-    // always return ok response to prevent email enumeration
-    if (!account) return;
+// todo: approve artist account 
+async function approveArtist(admin_id, params) {
+    const account = await getAccount(id);
 
-    // create reset token that expires after 24 hours
-    account.resetToken = randomTokenString();
-    account.resetTokenExpires = new Date(Date.now() + 24*60*60*1000);
+    // validate (if email was changed)
+    if (params.email && account.email !== params.email && await db.Account.findOne({
+            where: {
+                email: params.email
+            }
+        })) {
+        throw 'Email "' + params.email + '" is already taken';
+    }
+
+    // hash password if it was entered
+    if (params.password) {
+        params.passwordHash = await hash(params.password);
+    }
+    console.log(params);
+    // copy params to account and save. Wow i din't know JS had such a function
+    //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
+    account = Object.assign(account, params);
+    console.log(account);
+    account.updated = Date.now();
     await account.save();
 
-    // send email
+    return basicDetails(account);
+}
+
+
+async function forgotPassword({
+    email
+}, origin) {
+    const account = await db.Account.findOne({
+        where: {
+            email
+        }
+    });
+    console.log(account);
+    // always return ok response to prevent email enumeration
+    // wow this is cool?? so you return 200 to prevent this? 
+    if (!account) return;
+    console.log("account not found?");
+    // create reset token that expires after 24 hours
+    account.resetToken = randomTokenString();
+    account.resetTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await account.save();
+
+    // send email 
+    // how come unauthorized for admin? 
     await sendPasswordResetEmail(account, origin);
 }
 
-async function validateResetToken({ token }) {
+async function validateResetToken({
+    token
+}) {
     const account = await db.Account.findOne({
         where: {
             resetToken: token,
-            resetTokenExpires: { [Op.gt]: Date.now() }
+            resetTokenExpires: {
+                [Op.gt]: Date.now()
+            }
         }
     });
 
@@ -159,8 +227,13 @@ async function validateResetToken({ token }) {
     return account;
 }
 
-async function resetPassword({ token, password }) {
-    const account = await validateResetToken({ token });
+async function resetPassword({
+    token,
+    password
+}) {
+    const account = await validateResetToken({
+        token
+    });
 
     // update password and remove reset token
     account.passwordHash = await hash(password);
@@ -181,7 +254,11 @@ async function getById(id) {
 // Account table C
 async function create(params) {
     // validate
-    if (await db.Account.findOne({ where: { email: params.email } })) {
+    if (await db.Account.findOne({
+            where: {
+                email: params.email
+            }
+        })) {
         throw 'Email "' + params.email + '" is already registered';
     }
 
@@ -196,12 +273,17 @@ async function create(params) {
 
     return basicDetails(account);
 }
-//Account table U
+//Account table U 
+// params not updating??? why 
 async function update(id, params) {
     const account = await getAccount(id);
 
     // validate (if email was changed)
-    if (params.email && account.email !== params.email && await db.Account.findOne({ where: { email: params.email } })) {
+    if (params.email && account.email !== params.email && await db.Account.findOne({
+            where: {
+                email: params.email
+            }
+        })) {
         throw 'Email "' + params.email + '" is already taken';
     }
 
@@ -209,11 +291,14 @@ async function update(id, params) {
     if (params.password) {
         params.passwordHash = await hash(params.password);
     }
-
+    console.log("skam");
+    console.log(params);
+    console.log(params.email);
     // copy params to account and save. Wow i din't know JS had such a function
     //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/assign
     Object.assign(account, params);
     account.updated = Date.now();
+    console.log(account);
     await account.save();
 
     return basicDetails(account);
@@ -235,7 +320,11 @@ async function getAccount(id) {
 }
 
 async function getRefreshToken(token) {
-    const refreshToken = await db.RefreshToken.findOne({ where: { token } });
+    const refreshToken = await db.RefreshToken.findOne({
+        where: {
+            token
+        }
+    });
     if (!refreshToken || !refreshToken.isActive) throw 'Invalid token';
     return refreshToken;
 }
@@ -246,7 +335,12 @@ async function hash(password) {
 
 function generateJwtToken(account) {
     // create a jwt token containing the account id that expires in 15 minutes
-    return jwt.sign({ sub: account.id, id: account.id }, config.secret, { expiresIn: '15m' });
+    return jwt.sign({
+        sub: account.id,
+        id: account.id
+    }, config.secret, {
+        expiresIn: '15m'
+    });
 }
 
 function generateRefreshToken(account, ipAddress) {
@@ -254,7 +348,7 @@ function generateRefreshToken(account, ipAddress) {
     return new db.RefreshToken({
         accountId: account.id,
         token: randomTokenString(),
-        expires: new Date(Date.now() + 7*24*60*60*1000),
+        expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         createdByIp: ipAddress
     });
 }
@@ -264,8 +358,30 @@ function randomTokenString() {
 }
 
 function basicDetails(account) {
-    const { id, title, firstName, lastName, email, role, created, updated, isVerified } = account;
-    return { id, title, firstName, lastName, email, role, created, updated, isVerified };
+    const {
+        id,
+        title,
+        firstName,
+        lastName,
+        email,
+        role,
+        created,
+        updated,
+        isVerified,
+        isApproved
+    } = account;
+    return {
+        id,
+        title,
+        firstName,
+        lastName,
+        email,
+        role,
+        created,
+        updated,
+        isVerified,
+        isApproved
+    };
 }
 
 async function sendVerificationEmail(account, origin) {

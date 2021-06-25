@@ -8,7 +8,7 @@ const accountService = require('./account.service');
 
 
 // this seems to be the complex MS? why multiple functions is parse?? i don't get it? 
-// routes 
+// controller here 
 router.post('/authenticate', authenticateSchema, authenticate);
 router.post('/refresh-token', refreshToken);
 router.post('/revoke-token', authorize(), revokeTokenSchema, revokeToken);
@@ -178,7 +178,7 @@ function createSchema(req, res, next) {
         email: Joi.string().email().required(),
         password: Joi.string().min(6).required(),
         confirmPassword: Joi.string().valid(Joi.ref('password')).required(),
-        role: Joi.string().valid(Role.Admin, Role.User).required()
+        role: Joi.string().valid(Role.Admin, Role.User, Role.Artist).required()
     });
     validateRequest(req, next, schema);
 }
@@ -188,7 +188,8 @@ function create(req, res, next) {
         .then(account => res.json(account))
         .catch(next);
 }
-
+// added isApproved field to accept true or false. 
+// .empty meaning it allows an null imput 
 function updateSchema(req, res, next) {
     const schemaRules = {
         title: Joi.string().empty(''),
@@ -197,12 +198,14 @@ function updateSchema(req, res, next) {
         email: Joi.string().email().empty(''),
         password: Joi.string().min(6).empty(''),
         confirmPassword: Joi.string().valid(Joi.ref('password')).empty(''),
-        role:Joi.string().empty('')
+        role:Joi.string().empty(''),
+        isApproved: Joi.boolean().valid(true,false).empty('')
     };
 
     // only admins can update role
+    // how come can update the artist just now? does line 208 even works?? wtf
     if (req.user.role === Role.Admin) {
-        schemaRules.role = Joi.string().valid(Role.Admin, Role.User).empty('');
+        schemaRules.role = Joi.string().valid(Role.Admin, Role.User, Role.Artist).empty('');
     }
 
     const schema = Joi.object(schemaRules).with('password', 'confirmPassword');
